@@ -4,6 +4,77 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
+  // Auth elements
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const loginModal = document.getElementById("loginModal");
+  const loginForm = document.getElementById("loginForm");
+  const closeBtn = document.querySelector(".close");
+  const teacherInfo = document.getElementById("teacherInfo");
+  const teacherName = document.getElementById("teacherName");
+  const loginMessage = document.getElementById("loginMessage");
+
+  let authCredentials = null;
+
+  // Show/hide login modal
+  loginBtn.onclick = () => {
+    loginModal.classList.remove("hidden");
+  };
+
+  closeBtn.onclick = () => {
+    loginModal.classList.add("hidden");
+    loginMessage.classList.add("hidden");
+  };
+
+  window.onclick = (event) => {
+    if (event.target === loginModal) {
+      loginModal.classList.add("hidden");
+      loginMessage.classList.add("hidden");
+    }
+  };
+
+  // Handle login
+  loginForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    
+    // Create base64 encoded credentials
+    const credentials = btoa(`${username}:${password}`);
+    
+    try {
+      // Test credentials with a signup attempt
+      const response = await fetch("/activities/test/signup?email=test@test.com", {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${credentials}`
+        }
+      });
+
+      if (response.ok) {
+        authCredentials = credentials;
+        teacherName.textContent = username;
+        loginBtn.classList.add("hidden");
+        teacherInfo.classList.remove("hidden");
+        loginModal.classList.add("hidden");
+        loginForm.reset();
+      } else {
+        throw new Error("Invalid credentials");
+      }
+    } catch (error) {
+      loginMessage.textContent = "Invalid username or password";
+      loginMessage.classList.remove("hidden");
+      loginMessage.className = "error";
+    }
+  };
+
+  // Handle logout
+  logoutBtn.onclick = () => {
+    authCredentials = null;
+    teacherInfo.classList.add("hidden");
+    loginBtn.classList.remove("hidden");
+  };
+
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
@@ -69,6 +140,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle unregister functionality
   async function handleUnregister(event) {
+    if (!authCredentials) {
+      messageDiv.textContent = "Please login as a teacher to unregister students";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      return;
+    }
+
     const button = event.target;
     const activity = button.getAttribute("data-activity");
     const email = button.getAttribute("data-email");
@@ -80,8 +158,10 @@ document.addEventListener("DOMContentLoaded", () => {
         )}/unregister?email=${encodeURIComponent(email)}`,
         {
           method: "DELETE",
-        }
-      );
+          headers: {
+            "Authorization": `Basic ${authCredentials}`
+          }
+        });
 
       const result = await response.json();
 
@@ -114,6 +194,13 @@ document.addEventListener("DOMContentLoaded", () => {
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    if (!authCredentials) {
+      messageDiv.textContent = "Please login as a teacher to register students";
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
+      return;
+    }
+
     const email = document.getElementById("email").value;
     const activity = document.getElementById("activity").value;
 
@@ -124,8 +211,10 @@ document.addEventListener("DOMContentLoaded", () => {
         )}/signup?email=${encodeURIComponent(email)}`,
         {
           method: "POST",
-        }
-      );
+          headers: {
+            "Authorization": `Basic ${authCredentials}`
+          }
+        });
 
       const result = await response.json();
 
