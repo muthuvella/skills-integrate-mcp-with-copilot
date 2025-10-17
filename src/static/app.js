@@ -18,17 +18,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Show/hide login modal
   loginBtn.onclick = () => {
-    loginModal.classList.remove("hidden");
+    loginModal.classList.add("show");
   };
 
   closeBtn.onclick = () => {
-    loginModal.classList.add("hidden");
+    loginModal.classList.remove("show");
     loginMessage.classList.add("hidden");
   };
 
   window.onclick = (event) => {
     if (event.target === loginModal) {
-      loginModal.classList.add("hidden");
+      loginModal.classList.remove("show");
       loginMessage.classList.add("hidden");
     }
   };
@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         teacherName.textContent = username;
         loginBtn.classList.add("hidden");
         teacherInfo.classList.remove("hidden");
-        loginModal.classList.add("hidden");
+        loginModal.classList.remove("show");
         loginForm.reset();
       } else {
         throw new Error("Invalid credentials");
