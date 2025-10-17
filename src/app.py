@@ -30,23 +30,38 @@ def get_current_teacher(credentials: HTTPBasicCredentials = Depends(security)):
     with open(os.path.join(current_dir, "teachers.json")) as f:
         teachers_data = json.load(f)
     
+    print(f"Attempting login with username: {credentials.username}")
+    
     # Create username variations (with and without prefix)
-    username = credentials.username.lower()
-    username_with_prefix = f"mr.{username}" if not username.startswith(("mr.", "mrs.")) else username
-    username_with_mrs = f"mrs.{username}" if not username.startswith(("mr.", "mrs.")) else username
+    username = credentials.username.lower().strip()
+    prefixes = ["", "mr.", "mrs."]
+    base_name = username
+    for prefix in ["mr.", "mrs."]:
+        if username.startswith(prefix):
+            base_name = username[len(prefix):]
+            break
     
-    teachers = {t["username"].lower(): t["password"] for t in teachers_data["teachers"]}
+    # Generate all possible username variations
+    test_usernames = [prefix + base_name for prefix in prefixes]
+    print(f"Testing username variations: {test_usernames}")
     
-    # Check both with and without prefix
-    for test_username in [username, username_with_prefix, username_with_mrs]:
+    # Create case-insensitive teacher lookup
+    teachers = {t["username"].lower().strip(): t["password"] for t in teachers_data["teachers"]}
+    print(f"Available teachers: {list(teachers.keys())}")
+    
+    # Check all variations
+    for test_username in test_usernames:
         if test_username in teachers:
+            print(f"Found matching username: {test_username}")
             if secrets.compare_digest(credentials.password, teachers[test_username]):
+                print("Password match successful")
                 return test_username
+            print("Password match failed")
     
+    print("No matching username/password combination found")
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid credentials",
-        # Remove WWW-Authenticate header to prevent browser popup
+        detail="Invalid credentials"
     )
 
 # In-memory activity database

@@ -43,18 +43,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const credentials = btoa(`${username}:${password}`);
     
     try {
-      const simplifiedUsername = username.toLowerCase().replace(/^(mr\.|mrs\.)/, '');
+      // Clear any previous error messages
+      loginMessage.textContent = '';
+      loginMessage.className = 'hidden';
+      
+      const simplifiedUsername = username.toLowerCase().trim().replace(/^(mr\.|mrs\.)/, '');
+      console.log('Login attempt with:', { username, simplifiedUsername });
       
       // Try both with and without prefix
       const attempts = [
-        username,
+        simplifiedUsername,
         `mr.${simplifiedUsername}`,
         `mrs.${simplifiedUsername}`
       ];
+      console.log('Will try these variations:', attempts);
 
       let loginSuccessful = false;
       
       for (const attemptUsername of attempts) {
+        console.log('Trying username:', attemptUsername);
         const attemptCredentials = btoa(`${attemptUsername}:${password}`);
         const response = await fetch("/activities/test/signup?email=test@test.com", {
           method: "POST",
@@ -76,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       if (!loginSuccessful) {
-        throw new Error("Invalid credentials");
+        throw new Error("Could not log in with any username variation. Please make sure username and password are correct.");
       }
     } catch (error) {
       loginMessage.textContent = "Invalid username or password";
