@@ -43,22 +43,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const credentials = btoa(`${username}:${password}`);
     
     try {
-      // Test credentials with a signup attempt
-      const response = await fetch("/activities/test/signup?email=test@test.com", {
-        method: "POST",
-        headers: {
-          "Authorization": `Basic ${credentials}`
-        }
-      });
+      const simplifiedUsername = username.toLowerCase().replace(/^(mr\.|mrs\.)/, '');
+      
+      // Try both with and without prefix
+      const attempts = [
+        username,
+        `mr.${simplifiedUsername}`,
+        `mrs.${simplifiedUsername}`
+      ];
 
-      if (response.ok) {
-        authCredentials = credentials;
-        teacherName.textContent = username;
-        loginBtn.classList.add("hidden");
-        teacherInfo.classList.remove("hidden");
-        loginModal.classList.remove("show");
-        loginForm.reset();
-      } else {
+      let loginSuccessful = false;
+      
+      for (const attemptUsername of attempts) {
+        const attemptCredentials = btoa(`${attemptUsername}:${password}`);
+        const response = await fetch("/activities/test/signup?email=test@test.com", {
+          method: "POST",
+          headers: {
+            "Authorization": `Basic ${attemptCredentials}`
+          }
+        });
+
+        if (response.ok) {
+          authCredentials = attemptCredentials;
+          teacherName.textContent = attemptUsername;
+          loginBtn.classList.add("hidden");
+          teacherInfo.classList.remove("hidden");
+          loginModal.classList.remove("show");
+          loginForm.reset();
+          loginSuccessful = true;
+          break;
+        }
+      }
+      
+      if (!loginSuccessful) {
         throw new Error("Invalid credentials");
       }
     } catch (error) {

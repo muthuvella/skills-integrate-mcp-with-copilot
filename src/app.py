@@ -30,16 +30,23 @@ def get_current_teacher(credentials: HTTPBasicCredentials = Depends(security)):
     with open(os.path.join(current_dir, "teachers.json")) as f:
         teachers_data = json.load(f)
     
-    teachers = {t["username"]: t["password"] for t in teachers_data["teachers"]}
+    # Create username variations (with and without prefix)
+    username = credentials.username.lower()
+    username_with_prefix = f"mr.{username}" if not username.startswith(("mr.", "mrs.")) else username
+    username_with_mrs = f"mrs.{username}" if not username.startswith(("mr.", "mrs.")) else username
     
-    if credentials.username in teachers:
-        if secrets.compare_digest(credentials.password, teachers[credentials.username]):
-            return credentials.username
+    teachers = {t["username"].lower(): t["password"] for t in teachers_data["teachers"]}
+    
+    # Check both with and without prefix
+    for test_username in [username, username_with_prefix, username_with_mrs]:
+        if test_username in teachers:
+            if secrets.compare_digest(credentials.password, teachers[test_username]):
+                return test_username
     
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid credentials",
-        headers={"WWW-Authenticate": "Basic"},
+        # Remove WWW-Authenticate header to prevent browser popup
     )
 
 # In-memory activity database
