@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const attemptUsername of attempts) {
         console.log('Trying username:', attemptUsername);
         const attemptCredentials = btoa(`${attemptUsername}:${password}`);
-        const response = await fetch("/activities/test/signup?email=test@test.com", {
+        const response = await fetch("/auth/verify", {
           method: "POST",
           headers: {
             "Authorization": `Basic ${attemptCredentials}`

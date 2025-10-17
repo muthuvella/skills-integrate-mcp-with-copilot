@@ -133,6 +133,11 @@ def get_activities():
     return activities
 
 
+@app.post("/auth/verify")
+def verify_auth(teacher: str = Depends(get_current_teacher)):
+    """Endpoint to verify teacher credentials"""
+    return {"authenticated": True, "username": teacher}
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(
     activity_name: str,
